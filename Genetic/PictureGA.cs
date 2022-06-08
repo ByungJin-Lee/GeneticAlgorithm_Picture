@@ -2,10 +2,11 @@
 
 namespace Genetic
 {
-    class PictureUnit
+    public class PictureUnit
     {
         public static int pHorizontalMax, pVerticalMax, widthMax, heightMax;
         private static Random random = new Random();
+
         public Point point;
         public Color color;
         public int width, height;
@@ -20,25 +21,41 @@ namespace Genetic
                 height = random.Next(heightMax)
             };
         }
+
+        public static void SetLimit(int pHorizontalMax, int pVerticalMax, int widthMax, int heightMax)
+        {
+            PictureUnit.pHorizontalMax = pHorizontalMax;
+            PictureUnit.pVerticalMax = pVerticalMax;
+            PictureUnit.widthMax = widthMax;
+            PictureUnit.heightMax = heightMax;
+        }
     }
 
     class PictureGeneBluePrint : GeneBluePrint
     {
-        public PictureGeneBluePrint(uint length) : base(length)
-        {
+        public int Height, Width;
 
+        public PictureGeneBluePrint(uint length, uint maskLength, uint elite, uint mutation, int Width, int Height) : base(length, maskLength, elite, mutation)
+        {
+            PictureUnit.SetLimit(Width, Height, Width, Height);
+            this.Height = Height;
+            this.Width = Width;
+            for(int i = 0; i < maskLength; i++)
+            {
+                this.MaskPattern[i] = GeneBluePrint.GenerateBinaryMask(length);
+            }
         }
-        protected override object GetUnit()
+        public override object GetUnit()
         {
             return PictureUnit.GetRndUnit();
         }
-        protected override ArrayList Mutate(ArrayList lhs)
-        {
-            throw new NotImplementedException();
-        }
-        protected override ArrayList Overcross(ArrayList lhs, ArrayList rhs)
-        {
-            throw new NotImplementedException();
-        }
+        //public override ArrayList Mutate(ArrayList lhs)
+        //{
+        //    throw new NotImplementedException();
+        //}
+        //public override List<ArrayList> Overcross(ArrayList lhs, ArrayList rhs)
+        //{
+        //    throw new NotImplementedException();
+        //}
     }
 }
