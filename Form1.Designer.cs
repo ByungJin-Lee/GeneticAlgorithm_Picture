@@ -34,6 +34,8 @@
             this.lbl_info = new System.Windows.Forms.Label();
             this.txt_log = new System.Windows.Forms.RichTextBox();
             this.btn_evaluate = new System.Windows.Forms.Button();
+            this.btn_next = new System.Windows.Forms.Button();
+            this.btn_overrun = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // lbl_origin
@@ -65,12 +67,12 @@
             // lbl_info
             // 
             this.lbl_info.AutoSize = true;
-            this.lbl_info.Location = new System.Drawing.Point(501, 16);
+            this.lbl_info.Location = new System.Drawing.Point(12, 9);
             this.lbl_info.Name = "lbl_info";
             this.lbl_info.Size = new System.Drawing.Size(28, 15);
             this.lbl_info.TabIndex = 3;
             this.lbl_info.Text = "info";
-            this.lbl_info.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.lbl_info.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // txt_log
             // 
@@ -90,11 +92,33 @@
             this.btn_evaluate.UseVisualStyleBackColor = true;
             this.btn_evaluate.Click += new System.EventHandler(this.btn_evaluate_Click);
             // 
+            // btn_next
+            // 
+            this.btn_next.Location = new System.Drawing.Point(708, 12);
+            this.btn_next.Name = "btn_next";
+            this.btn_next.Size = new System.Drawing.Size(75, 23);
+            this.btn_next.TabIndex = 6;
+            this.btn_next.Text = "Next";
+            this.btn_next.UseVisualStyleBackColor = true;
+            this.btn_next.Click += new System.EventHandler(this.btn_next_Click);
+            // 
+            // btn_overrun
+            // 
+            this.btn_overrun.Location = new System.Drawing.Point(789, 12);
+            this.btn_overrun.Name = "btn_overrun";
+            this.btn_overrun.Size = new System.Drawing.Size(75, 23);
+            this.btn_overrun.TabIndex = 7;
+            this.btn_overrun.Text = "run";
+            this.btn_overrun.UseVisualStyleBackColor = true;
+            this.btn_overrun.Click += new System.EventHandler(this.btn_overrun_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(891, 450);
+            this.Controls.Add(this.btn_overrun);
+            this.Controls.Add(this.btn_next);
             this.Controls.Add(this.btn_evaluate);
             this.Controls.Add(this.txt_log);
             this.Controls.Add(this.lbl_info);
@@ -116,5 +140,7 @@
         private Label lbl_info;
         private RichTextBox txt_log;
         private Button btn_evaluate;
+        private Button btn_next;
+        private Button btn_overrun;
     }
 }

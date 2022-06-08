@@ -6,14 +6,19 @@ namespace PictureGA
     public partial class Form1 : Form
     {
         Bitmap originBitmap, testBitmap;
+        int PWIDTH, PHEIGHT;
         Model gaModel;
         bool is_model_learning = false;
+        int mutation = 20;
+        int elite = 1;
 
         public Form1()
         {
             InitializeComponent();
-            txt_log.Enabled = false;
-            originBitmap = ReadBitmap("albert.jpeg");
+            //txt_log.Enabled = false;
+            originBitmap = ReadBitmap("einstein.png");
+            PWIDTH = originBitmap.Width;
+            PHEIGHT = originBitmap.Height; 
         }
 
         #region Paint
@@ -31,7 +36,7 @@ namespace PictureGA
         {
             if (is_model_learning == false)
             {
-                gaModel = GenerateGAModel(30, 100, 1);
+                gaModel = GenerateGAModel(30, PHEIGHT * PWIDTH, 1);
                 UpdateInfo();
                 btn_model.Text = "Stop Learing";
                 is_model_learning = true;
@@ -43,11 +48,14 @@ namespace PictureGA
             }
         }
 
-        public void UpdateTest(Bitmap bitmap, int value)
+        public void UpdateTest(Bitmap bitmap, int value, bool model_display = false)
         {
-            testBitmap = bitmap;
-            //lbl_model.Update();
-            //lbl_model.Refresh();
+            if(model_display == true)
+            {
+                testBitmap = bitmap;
+                lbl_model.Update();
+                lbl_model.Refresh();
+            }
             txt_log.AppendText(value.ToString() + '\n');
             txt_log.Update();
             txt_log.Refresh();
@@ -57,6 +65,8 @@ namespace PictureGA
         public void UpdateInfo()
         {
             lbl_info.Text = gaModel.ToString();
+            lbl_info.Update();
+            lbl_info.Refresh();
         }
 
         private void btn_evaluate_Click(object sender, EventArgs e)
@@ -65,6 +75,7 @@ namespace PictureGA
             {
                 gaModel.Fit();
                 UpdateInfo();
+                UpdateTest(ConverToBitmapFromGene(gaModel.elite.gene), gaModel.elite.Score, true);
             }
         }
 
@@ -77,12 +88,12 @@ namespace PictureGA
             return new Bitmap(image);
         }
 
-        private Model GenerateGAModel(uint population, uint geneUnitLength, uint maskLength)
+        private Model GenerateGAModel(int population, int geneUnitLength, int maskLength)
         {
             if (originBitmap == null) throw new Exception("There is no loaded image!");
 
             // 유전자 설계도 작성 (업캐스팅)
-            GeneBluePrint blueprint = new PictureGeneBluePrint(geneUnitLength, maskLength, 3, 2, originBitmap.Width, originBitmap.Height);
+            GeneBluePrint blueprint = new PictureGeneBluePrint(geneUnitLength, maskLength, elite, mutation);
             // 유전자 설계도를 이용하여 시뮬레이션 공간을 생성
             GenePool pool = new GenePool(population, blueprint);
             // 랜덤 유전자로 공간을 채움
@@ -92,16 +103,15 @@ namespace PictureGA
             return model;
         }
 
-        public void DrawPictureUnit(Graphics g, PictureUnit unit)
-        {
-            g.FillEllipse(new SolidBrush(unit.color), unit.point.X, unit.point.Y, unit.width, unit.height);
-        }
-
         public Bitmap ConverToBitmapFromGene(ArrayList gene)
         {
             Bitmap bitmap = new Bitmap(originBitmap.Width, originBitmap.Height);
-            Graphics g = Graphics.FromImage(bitmap);
-            foreach (object _u in gene) DrawPictureUnit(g, (PictureUnit)_u);
+            for(int i = 0; i < gene.Count; i++)
+            {
+                PictureUnit u = (PictureUnit)gene[i];
+                bitmap.SetPixel(i % PWIDTH, i / PWIDTH, u.color);
+            }
+
             return bitmap;
         }
 
@@ -109,7 +119,7 @@ namespace PictureGA
         {
             Bitmap bitmap = ConverToBitmapFromGene(gene);
             int value = CalcDifferenceBitmap(originBitmap, bitmap);
-            UpdateTest(bitmap, value);
+            UpdateTest(bitmap, value, true);
             return value;
         }
 
@@ -121,20 +131,41 @@ namespace PictureGA
             int score = 0;
             for(int r = 0; r < lhs.Height; r++)
             {
-                for(int c = 0; c < rhs.Height; c++)
+                for(int c = 0; c < lhs.Width; c++)
                 {
-                    int value = CalcDifferenceColor(lhs.GetPixel(r, c), rhs.GetPixel(r, c));
+                    int value = CalcDifferenceColor(lhs.GetPixel(c, r), rhs.GetPixel(c, r));
                     score += value;
                 }
             }
             return score;
         }
 
+        private void btn_overrun_Click(object sender, EventArgs e)
+        {
+            while (true)
+            {
+                gaModel.Fit();
+                UpdateInfo();
+                UpdateTest(ConverToBitmapFromGene(gaModel.elite.gene), gaModel.elite.Score, true);
+                gaModel.Next();
+            }
+        }
+
+        private void btn_next_Click(object sender, EventArgs e)
+        {
+            if (gaModel != null)
+            {
+                gaModel.Next();
+                txt_log.AppendText("next generation\n");
+                txt_log.ScrollToCaret();
+            }
+        }
+
 
         // 삼원색 별 차이 합
         public int CalcDifferenceColor(Color lhs, Color rhs)
         {
-            return Math.Abs(lhs.R - rhs.R) + Math.Abs(lhs.G - rhs.G) + Math.Abs(lhs.B - rhs.B);
+            return Math.Abs(lhs.R - rhs.R);
         }
 
         #endregion
