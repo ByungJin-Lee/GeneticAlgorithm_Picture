@@ -4,7 +4,7 @@ namespace Genetic
 {
     class Model
     {
-        private GenePool pool;
+        public GenePool pool;
         public GeneScore elite;
         public List<GeneScore> scores;
         public delegate int EvaluateGeneType(ArrayList gene);
@@ -49,24 +49,23 @@ namespace Genetic
         public override string ToString()
         {
             if(elite == null)
-                return String.Format("G{0} UL{1} E{2} M{3} HS-1", pool.generation, pool.blueprint.length, pool.blueprint.elite, pool.blueprint.mutation);
-            return String.Format("G{0} UL{1} E{2} M{3} HS{4}", pool.generation, pool.blueprint.length, pool.blueprint.elite, pool.blueprint.mutation, elite.Score);
+                return String.Format("G{0} P{1} UL{2} E{3} M{4}% HS-1", pool.generation, pool.population, pool.blueprint.length, pool.blueprint.elite, pool.blueprint.mutation);
+            return String.Format("G{0} P{1} UL{2} E{3} M{4}% HS{5}", pool.generation, pool.population, pool.blueprint.length, pool.blueprint.elite, pool.blueprint.mutation, elite.Score);
         }
     }
     abstract class GeneBluePrint
     {
         protected static Random random = new Random();
         /// <summary> 유전자 염기서열 길이 </summary>
-        public int length, maskLength, elite, mutation;
-        public bool[][] MaskPattern;
+        public int length, maskLength, elite, mutation, overcross;
 
-        public GeneBluePrint(int length, int maskLength, int elite, int mutation)
+        public GeneBluePrint(int length, int maskLength, int elite, int mutation, int overcross)
         {
             this.length = length;
             this.maskLength = maskLength;
             this.elite = elite;
             this.mutation = mutation;
-            this.MaskPattern = new bool[length][];
+            this.overcross = overcross;
         }
         /// <summary> 난수 유전자 생성 </summary>
         public ArrayList GenerateGene()
@@ -81,6 +80,11 @@ namespace Genetic
             return random.Next(100) < mutation;
         }
 
+        public bool IsOvercross()
+        {
+            return random.Next(100) < overcross;
+        }
+
         static public bool[] GenerateBinaryMask(int length)
         {
             bool[] mask = new bool[length];
@@ -91,6 +95,8 @@ namespace Genetic
             return mask;
         }
 
+        
+
         /// <summary> 유전자 염기서열 생성 </summary>
         abstract public object GetUnit();
         /// <summary> 유전자 교차 </summary>
@@ -100,38 +106,39 @@ namespace Genetic
 
             for(int m = 0; m < maskLength; m++)
             {
-                bool[] mask = MaskPattern[m];
-                ArrayList u1 = new ArrayList(), u2 = new ArrayList();
+                bool[] mask = GenerateBinaryMask(length);
 
-                for(int i = 0; i < mask.Length; i++)
-                {
+                ArrayList g1 = new ArrayList(), g2 = new ArrayList();
+                for (int i = 0; i < mask.Length; i++) {
                     if (mask[i])
                     {
-                        u1.Add(lhs[i]);
-                        u2.Add(rhs[i]);
+                        g1.Add(lhs[i]);
+                        //g2.Add(rhs[i]);
                     }
                     else
                     {
-                        u1.Add(rhs[i]);
-                        u2.Add(lhs[i]);
+                        g1.Add(rhs[i]);
+                        //g2.Add(lhs[i]);
                     }
                 }
-
-                overcrossed.Add(u1);
-                //overcrossed.Add(u2);
+                overcrossed.Add(g1);
+                //overcrossed.Add(g2);
             }
             return overcrossed;
         }
         /// <summary> 돌연변이 생성 </summary>
-        public ArrayList Mutate(ArrayList lhs)
+        public List<ArrayList> Mutate(ArrayList lhs)
         {
-            return GenerateGene();
+            List<ArrayList> mutations = new List<ArrayList>();
+            if(lhs == null) mutations.Add(GenerateGene());
+            else mutations = Overcross(lhs, GenerateGene());
+            return mutations;
         }
     }
 
     class GenePool
     {
-        public int generation, population;
+        public int generation, population, interval = 25;
         public List<ArrayList> genes;
         public GeneBluePrint blueprint;
         public GenePool(int population, GeneBluePrint blueprint)
@@ -144,41 +151,32 @@ namespace Genetic
 
         public int Next(List<GeneScore> scores)
         {
-
-            List<ArrayList> nextGenes = new List<ArrayList>();
-
-            List<ArrayList> eliteGenes = new List<ArrayList>();
-            for (int i = 0; i < blueprint.elite; i++) eliteGenes.Add(scores[i].gene);
-
-            for(int i = 0; i < blueprint.elite; i++)
+            List<ArrayList> desending = new List<ArrayList>();
+            foreach (GeneScore cs in scores) desending.Add(cs.gene);
+            List<ArrayList> nextGenes = desending.GetRange(0, blueprint.elite);
+            //GeneScore.GetHighScoreCount(scores) > 1
+            if (GeneScore.GetHighScoreCount(scores) > 1)
             {
-                for(int j = i + 1; j < 4 - i; j++)
+                while(nextGenes.Count < population)
                 {
-                    if (blueprint.IsMutation())
-                    {
-                        eliteGenes.AddRange(blueprint.Overcross(eliteGenes[i], blueprint.GenerateGene()));
-                    }
-                    else
-                    {
-                        eliteGenes.AddRange(blueprint.Overcross(eliteGenes[i], scores[j].gene));
-                    }
+                    nextGenes.AddRange(blueprint.Mutate(desending[0]));
                 }
-                    
+                genes = nextGenes;
+                return ++generation;
             }
-            nextGenes.AddRange(eliteGenes);
 
-            for(int i = (int)blueprint.elite; i < population - 1 && nextGenes.Count < population; i++)
+            int i = 0;
+            while(nextGenes.Count < population && i < population - 1)
             {
                 if (blueprint.IsMutation())
                 {
-                    System.Diagnostics.Trace.WriteLine("Oh!");
-                    nextGenes.AddRange(blueprint.Overcross(scores[i].gene, blueprint.GenerateGene()));
+                    nextGenes.AddRange(blueprint.Mutate(desending[i]));
                 }
-                else nextGenes.AddRange(blueprint.Overcross(scores[i].gene, scores[i + 1].gene));
+                else
+                {
+                    nextGenes.AddRange(blueprint.Overcross(desending[i], desending[i+1]));
+                }
             }
-
-            nextGenes.Add(blueprint.GenerateGene());
-
             genes = nextGenes.GetRange(0, (int)population);
 
             return ++generation;
@@ -204,5 +202,34 @@ namespace Genetic
             this.Index = idx;
             this.gene = gene;
         }
+
+        static public int GetHighScoreCount(List<GeneScore> scores)
+        {
+            int count = 0, sc = scores[0].Score;
+            foreach(GeneScore score in scores)
+            {
+                if(score.Score == sc)
+                {
+                    count++;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            return count;
+        }
+
+        static public int IsDup(List<GeneScore> scores)
+        {
+            int count = 0;
+            for (int i = scores.Count - 1; i > 0 ; i--)
+            {
+                if (scores[i].Score == scores[i - 1].Score) count++;
+            }
+
+            return count;
+        }
+
     }
 }

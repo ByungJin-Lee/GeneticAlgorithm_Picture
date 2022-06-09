@@ -5,26 +5,29 @@ namespace PictureGA
 {
     public partial class Form1 : Form
     {
-        Bitmap originBitmap, testBitmap;
-        int PWIDTH, PHEIGHT;
+        Picture picture;
+        Bitmap testBitmap;
         Model gaModel;
         bool is_model_learning = false;
-        int mutation = 20;
+        int mutation = 10, overcross = 100;
+        bool view_evaluate_seq = false;
         int elite = 1;
+        int masklen = 3;
+        int population = 100;
+        int limit_g = 2000;
 
         public Form1()
         {
             InitializeComponent();
             //txt_log.Enabled = false;
-            originBitmap = ReadBitmap("einstein.png");
-            PWIDTH = originBitmap.Width;
-            PHEIGHT = originBitmap.Height; 
+            Bitmap bitmap = ReadBitmap("einstein.png");
+            picture = new Picture(bitmap,5);
         }
 
         #region Paint
         private void lbl_origin_Paint(object sender, PaintEventArgs e)
         {
-            if (originBitmap != null) e.Graphics.DrawImage(originBitmap, 0, 0);
+            if (picture != null) e.Graphics.DrawImage(picture.originBitmap, 0, 0);
         }
 
         private void lbl_model_Paint(object sender, PaintEventArgs e)
@@ -36,7 +39,7 @@ namespace PictureGA
         {
             if (is_model_learning == false)
             {
-                gaModel = GenerateGAModel(30, PHEIGHT * PWIDTH, 1);
+                gaModel = GenerateGAModel(population, picture.widthLen * picture.heightLen, masklen);
                 UpdateInfo();
                 btn_model.Text = "Stop Learing";
                 is_model_learning = true;
@@ -75,7 +78,7 @@ namespace PictureGA
             {
                 gaModel.Fit();
                 UpdateInfo();
-                UpdateTest(ConverToBitmapFromGene(gaModel.elite.gene), gaModel.elite.Score, true);
+                UpdateTest(picture.MakeBitmapWithGene(gaModel.elite.gene), gaModel.elite.Score, true);
             }
         }
 
@@ -90,10 +93,10 @@ namespace PictureGA
 
         private Model GenerateGAModel(int population, int geneUnitLength, int maskLength)
         {
-            if (originBitmap == null) throw new Exception("There is no loaded image!");
+            if (picture == null) throw new Exception("There is no loaded picture!");
 
             // 유전자 설계도 작성 (업캐스팅)
-            GeneBluePrint blueprint = new PictureGeneBluePrint(geneUnitLength, maskLength, elite, mutation);
+            GeneBluePrint blueprint = new PictureGeneBluePrint(geneUnitLength, maskLength, elite, mutation, overcross);
             // 유전자 설계도를 이용하여 시뮬레이션 공간을 생성
             GenePool pool = new GenePool(population, blueprint);
             // 랜덤 유전자로 공간을 채움
@@ -103,23 +106,10 @@ namespace PictureGA
             return model;
         }
 
-        public Bitmap ConverToBitmapFromGene(ArrayList gene)
-        {
-            Bitmap bitmap = new Bitmap(originBitmap.Width, originBitmap.Height);
-            for(int i = 0; i < gene.Count; i++)
-            {
-                PictureUnit u = (PictureUnit)gene[i];
-                bitmap.SetPixel(i % PWIDTH, i / PWIDTH, u.color);
-            }
-
-            return bitmap;
-        }
-
         public int EvaluateGene(ArrayList gene)
         {
-            Bitmap bitmap = ConverToBitmapFromGene(gene);
-            int value = CalcDifferenceBitmap(originBitmap, bitmap);
-            UpdateTest(bitmap, value, true);
+            int value = picture.CalcScore(picture.MakeByteWithGene(gene));
+            //UpdateTest(picture.MakeBitmapWithGene(gene), value, view_evaluate_seq);
             return value;
         }
 
@@ -142,11 +132,11 @@ namespace PictureGA
 
         private void btn_overrun_Click(object sender, EventArgs e)
         {
-            while (true)
+            while (gaModel.pool.generation <= limit_g)
             {
                 gaModel.Fit();
                 UpdateInfo();
-                UpdateTest(ConverToBitmapFromGene(gaModel.elite.gene), gaModel.elite.Score, true);
+                UpdateTest(picture.MakeBitmapWithGene(gaModel.elite.gene), gaModel.elite.Score, true);
                 gaModel.Next();
             }
         }
