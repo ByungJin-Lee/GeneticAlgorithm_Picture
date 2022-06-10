@@ -1,5 +1,8 @@
-using Genetic;
+ï»¿using Genetic;
+using System;
 using System.Collections;
+using System.Drawing;
+using System.Windows.Forms;
 
 namespace PictureGA
 {
@@ -21,7 +24,7 @@ namespace PictureGA
             InitializeComponent();
             //txt_log.Enabled = false;
             Bitmap bitmap = ReadBitmap("einstein.png");
-            picture = new Picture(bitmap,5);
+            picture = new Picture(bitmap, 5);
         }
 
         #region Paint
@@ -53,7 +56,7 @@ namespace PictureGA
 
         public void UpdateTest(Bitmap bitmap, int value, bool model_display = false)
         {
-            if(model_display == true)
+            if (model_display == true)
             {
                 testBitmap = bitmap;
                 lbl_model.Update();
@@ -95,13 +98,13 @@ namespace PictureGA
         {
             if (picture == null) throw new Exception("There is no loaded picture!");
 
-            // À¯ÀüÀÚ ¼³°èµµ ÀÛ¼º (¾÷Ä³½ºÆÃ)
+            // ìœ ì „ì ì„¤ê³„ë„ ì‘ì„± (ì—…ìºìŠ¤íŒ…)
             GeneBluePrint blueprint = new PictureGeneBluePrint(geneUnitLength, maskLength, elite, mutation, overcross);
-            // À¯ÀüÀÚ ¼³°èµµ¸¦ ÀÌ¿ëÇÏ¿© ½Ã¹Ä·¹ÀÌ¼Ç °ø°£À» »ı¼º
+            // ìœ ì „ì ì„¤ê³„ë„ë¥¼ ì´ìš©í•˜ì—¬ ì‹œë®¬ë ˆì´ì…˜ ê³µê°„ì„ ìƒì„±
             GenePool pool = new GenePool(population, blueprint);
-            // ·£´ı À¯ÀüÀÚ·Î °ø°£À» Ã¤¿ò
+            // ëœë¤ ìœ ì „ìë¡œ ê³µê°„ì„ ì±„ì›€
             pool.FillRandom();
-            // À¯ÀüÀÚ ¸ğµ¨ »ı¼º, À¯ÀüÀÚ Æò°¡ÇÔ¼ö ÀÛ¼º
+            // ìœ ì „ì ëª¨ë¸ ìƒì„±, ìœ ì „ì í‰ê°€í•¨ìˆ˜ ì‘ì„±
             Model model = new Model(pool, EvaluateGene);
             return model;
         }
@@ -115,13 +118,13 @@ namespace PictureGA
 
         public int CalcDifferenceBitmap(Bitmap lhs, Bitmap rhs)
         {
-            if (lhs.Width != rhs.Width || lhs.Height != rhs.Height) 
+            if (lhs.Width != rhs.Width || lhs.Height != rhs.Height)
                 throw new Exception("Bitmap Size is Difference!")
 ;
             int score = 0;
-            for(int r = 0; r < lhs.Height; r++)
+            for (int r = 0; r < lhs.Height; r++)
             {
-                for(int c = 0; c < lhs.Width; c++)
+                for (int c = 0; c < lhs.Width; c++)
                 {
                     int value = CalcDifferenceColor(lhs.GetPixel(c, r), rhs.GetPixel(c, r));
                     score += value;
@@ -152,7 +155,7 @@ namespace PictureGA
         }
 
 
-        // »ï¿ø»ö º° Â÷ÀÌ ÇÕ
+        // ì‚¼ì›ìƒ‰ ë³„ ì°¨ì´ í•©
         public int CalcDifferenceColor(Color lhs, Color rhs)
         {
             return Math.Abs(lhs.R - rhs.R);

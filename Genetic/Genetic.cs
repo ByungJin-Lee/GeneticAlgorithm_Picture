@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace Genetic
 {
@@ -15,7 +17,7 @@ namespace Genetic
             this.pool = pool;
             this.evaluate = eval;
         }
-        
+
         public void Fit_Next()
         {
             Fit();
@@ -24,7 +26,7 @@ namespace Genetic
 
         public void Next()
         {
-            if (scores != null) 
+            if (scores != null)
                 this.pool.Next(scores);
         }
 
@@ -48,7 +50,7 @@ namespace Genetic
 
         public override string ToString()
         {
-            if(elite == null)
+            if (elite == null)
                 return String.Format("G{0} P{1} UL{2} E{3} M{4}% HS-1", pool.generation, pool.population, pool.blueprint.length, pool.blueprint.elite, pool.blueprint.mutation);
             return String.Format("G{0} P{1} UL{2} E{3} M{4}% HS{5}", pool.generation, pool.population, pool.blueprint.length, pool.blueprint.elite, pool.blueprint.mutation, elite.Score);
         }
@@ -88,14 +90,14 @@ namespace Genetic
         static public bool[] GenerateBinaryMask(int length)
         {
             bool[] mask = new bool[length];
-            for(int i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 mask[i] = random.Next(2) == 1;
             }
             return mask;
         }
 
-        
+
 
         /// <summary> 유전자 염기서열 생성 </summary>
         abstract public object GetUnit();
@@ -104,12 +106,13 @@ namespace Genetic
         {
             List<ArrayList> overcrossed = new List<ArrayList>();
 
-            for(int m = 0; m < maskLength; m++)
+            for (int m = 0; m < maskLength; m++)
             {
                 bool[] mask = GenerateBinaryMask(length);
 
                 ArrayList g1 = new ArrayList(), g2 = new ArrayList();
-                for (int i = 0; i < mask.Length; i++) {
+                for (int i = 0; i < mask.Length; i++)
+                {
                     if (mask[i])
                     {
                         g1.Add(lhs[i]);
@@ -130,7 +133,7 @@ namespace Genetic
         public List<ArrayList> Mutate(ArrayList lhs)
         {
             List<ArrayList> mutations = new List<ArrayList>();
-            if(lhs == null) mutations.Add(GenerateGene());
+            if (lhs == null) mutations.Add(GenerateGene());
             else mutations = Overcross(lhs, GenerateGene());
             return mutations;
         }
@@ -157,7 +160,7 @@ namespace Genetic
             //GeneScore.GetHighScoreCount(scores) > 1
             if (GeneScore.GetHighScoreCount(scores) > 1)
             {
-                while(nextGenes.Count < population)
+                while (nextGenes.Count < population)
                 {
                     nextGenes.AddRange(blueprint.Mutate(desending[0]));
                 }
@@ -166,7 +169,7 @@ namespace Genetic
             }
 
             int i = 0;
-            while(nextGenes.Count < population && i < population - 1)
+            while (nextGenes.Count < population && i < population - 1)
             {
                 if (blueprint.IsMutation())
                 {
@@ -174,7 +177,7 @@ namespace Genetic
                 }
                 else
                 {
-                    nextGenes.AddRange(blueprint.Overcross(desending[i], desending[i+1]));
+                    nextGenes.AddRange(blueprint.Overcross(desending[i], desending[i + 1]));
                 }
             }
             genes = nextGenes.GetRange(0, (int)population);
@@ -206,9 +209,9 @@ namespace Genetic
         static public int GetHighScoreCount(List<GeneScore> scores)
         {
             int count = 0, sc = scores[0].Score;
-            foreach(GeneScore score in scores)
+            foreach (GeneScore score in scores)
             {
-                if(score.Score == sc)
+                if (score.Score == sc)
                 {
                     count++;
                 }
@@ -223,7 +226,7 @@ namespace Genetic
         static public int IsDup(List<GeneScore> scores)
         {
             int count = 0;
-            for (int i = scores.Count - 1; i > 0 ; i--)
+            for (int i = scores.Count - 1; i > 0; i--)
             {
                 if (scores[i].Score == scores[i - 1].Score) count++;
             }
@@ -233,3 +236,4 @@ namespace Genetic
 
     }
 }
+

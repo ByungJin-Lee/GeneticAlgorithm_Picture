@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using System.Drawing;
+using System.Collections;
+using System;
 
 namespace Genetic
 {
