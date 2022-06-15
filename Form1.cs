@@ -16,15 +16,42 @@ namespace PictureGA
         bool view_evaluate_seq = false;
         int elite = 1;
         int masklen = 3;
+
         int population = 100;
         int limit_g = 2000;
+        int imgScale = 5;
 
         public Form1()
         {
             InitializeComponent();
             //txt_log.Enabled = false;
-            Bitmap bitmap = ReadBitmap("einstein.png");
-            picture = new Picture(bitmap, 5);
+            Bitmap bitmap = Properties.Resources.einstein;
+            picture = new Picture(bitmap, imgScale);
+
+            openFileDialog1.Filter = "PNG files (*.png)|*.png|JPEG files (*.jpg, *.jpeg)|*.jpg;*.jpeg|All files (*.*)|*.*";
+        }
+
+        private void btn_open_Click(object sender, EventArgs e)
+        {
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                picture = new Picture(ReadBitmap(openFileDialog1.FileName), imgScale);
+                lbl_origin.Invalidate();
+            }
+        }
+
+        private void btn_parameter_Click(object sender, EventArgs e)
+        {
+            ParameterDialog dlg = new ParameterDialog(population, limit_g, imgScale);
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                population = dlg.Population;
+                limit_g = dlg.GenLimit;
+                imgScale = dlg.ImgScale;
+
+                picture = new Picture(ReadBitmap(openFileDialog1.FileName), imgScale);
+                lbl_origin.Invalidate();
+            }
         }
 
         #region Paint
